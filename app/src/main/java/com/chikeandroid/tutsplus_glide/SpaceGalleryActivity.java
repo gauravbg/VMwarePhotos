@@ -48,6 +48,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
     private Button searchBtn;
     private LinearLayout searchArea;
     private TextView statusText;
+    private boolean isWaitingForResponse;
     SpaceGalleryActivity.ImageGalleryAdapter adapter;
 
     @Override
@@ -117,6 +118,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
     private void filterImages(String searchString) {
 
+        String[] tokens = searchString.split(",");
         if(searchString.equals("")) {
             adapter.mSpacePhotos = SpacePhoto.getSpacePhotos();
             adapter.notifyDataSetChanged();
@@ -128,9 +130,12 @@ public class SpaceGalleryActivity extends AppCompatActivity {
         for (int i=0; i<photos.length-1; i++) {
             List<String> tags = photos[i].getTags();
             for(String tag: tags) {
-                if (tag.contains(searchString)) {
-                    filteredPhotos.add(photos[i]);
+                for(int j=0; j<tokens.length; j++) {
+                    if (tag.contains(tokens[j])) {
+                        filteredPhotos.add(photos[i]);
+                    }
                 }
+
             }
         }
         SpacePhoto[] latestPhotos = new SpacePhoto[filteredPhotos.size()];
@@ -153,6 +158,10 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
             // Inflate the layout
             View photoView = inflater.inflate(R.layout.item_photo, parent, false);
+
+            GridLayoutManager.LayoutParams lp = (GridLayoutManager.LayoutParams) photoView.getLayoutParams();
+            lp.height = parent.getMeasuredHeight() / 4;
+            photoView.setLayoutParams(lp);
 
             ImageGalleryAdapter.MyViewHolder viewHolder = new ImageGalleryAdapter.MyViewHolder(photoView);
             return viewHolder;
@@ -218,13 +227,17 @@ public class SpaceGalleryActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id){
             case R.id.process:
-//                Toast.makeText(getApplicationContext(),"Item 1 Selected",Toast.LENGTH_LONG).show();
+                isWaitingForResponse = true;
                 makeRequest();
                 return true;
             default:
@@ -235,7 +248,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
 
     private void makeRequest() {
-        String url = "http://httpbin.org/put";
+        String url = "http://ec2-13-57-248-216.us-west-1.compute.amazonaws.com:5000/todo/api/v1/results";
         StringRequest putRequest = new StringRequest(Request.Method.PUT, url,
                 new Response.Listener<String>()
                 {
@@ -320,6 +333,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
             photo.setTags(tags);
         }
         updateStatusText();
+        isWaitingForResponse = false;
 
     }
 
@@ -335,5 +349,6 @@ public class SpaceGalleryActivity extends AppCompatActivity {
             photo.setTags(tags);
         }
         updateStatusText();
+        isWaitingForResponse = false;
     }
 }

@@ -18,7 +18,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".SpaceGalleryActivity" />
+        <activity android:name=".SpaceGalleryActivity"
+            android:screenOrientation="portrait" />
         <activity android:name=".GifsActivity" />
         <activity android:name=".SpacePhotoActivity" />
     </application>

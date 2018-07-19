@@ -72,20 +72,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        Button showGif = (Button) findViewById(R.id.btn_show_gif);
-//        showGif.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent gifIntent = new Intent(MainActivity.this, GifsActivity.class);
-//                startActivity(gifIntent);
-//            }
-//        });
-        credential =
-                GoogleAccountCredential.usingOAuth2(this, Collections.singleton(TasksScopes.TASKS));
-        SharedPreferences settings = getPreferences(Context.MODE_PRIVATE);
-        credential.setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
-        queue = Volley.newRequestQueue(this);
-
 
     }
 
@@ -101,14 +87,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (checkGooglePlayServicesAvailable()) {
-            haveGooglePlayServices();
-        }
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
