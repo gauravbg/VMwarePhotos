@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/tutsplus-glide.iml" filepath="$PROJECT_DIR$/tutsplus-glide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/code-an-image-gallery-with-glide.iml" filepath="$PROJECT_DIR$/code-an-image-gallery-with-glide.iml" />
     </modules>
   </component>
 </project>
