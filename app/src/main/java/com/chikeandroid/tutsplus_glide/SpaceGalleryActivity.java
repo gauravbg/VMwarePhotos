@@ -22,13 +22,19 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -238,6 +244,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
         switch (id){
             case R.id.process:
                 isWaitingForResponse = true;
+                statusText.setText("Processing Images");
                 makeRequest();
                 return true;
             default:
@@ -246,10 +253,31 @@ public class SpaceGalleryActivity extends AppCompatActivity {
     }
 
 
-
     private void makeRequest() {
-        String url = "http://ec2-13-57-248-216.us-west-1.compute.amazonaws.com:5000/todo/api/v1/results";
-        StringRequest putRequest = new StringRequest(Request.Method.PUT, url,
+        String url = "http://ec2-52-53-189-134.us-west-1.compute.amazonaws.com:5000/todo/api/v1/results";
+
+        Map<String, String> params = new HashMap();
+        params.put("url", getImageUrlString());
+
+        JSONObject parameters = new JSONObject(params);
+
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, url, parameters, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d("Response", response.toString());
+                showLoading(false);
+                onSuccess(response);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Error.Response", error.toString());
+                showLoading(false);
+                onFailure();
+            }
+        });
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>()
                 {
                     @Override
@@ -257,7 +285,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
                         // response
                         Log.d("Response", response);
                         showLoading(false);
-                        onSuccess();
+//                        onSuccess(response);
                     }
                 },
                 new Response.ErrorListener()
@@ -282,8 +310,13 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
         };
 
-        queue.add(putRequest);
-        Log.d(TAG, putRequest.toString());
+        jsonRequest.setRetryPolicy(new DefaultRetryPolicy(
+                50000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        queue.add(jsonRequest);
+        Log.d(TAG, jsonRequest.getUrl());
         showLoading(true);
     }
 
@@ -322,15 +355,31 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
 
 
-    private void onSuccess() {
+    private void onSuccess(JSONObject response) {
 
         Log.d(TAG, "Tags set:");
         SpacePhoto[] originalPhotos = SpacePhoto.getSpacePhotos();
         for(int i=0; i<originalPhotos.length; i++) {
             SpacePhoto photo = originalPhotos[i];
-            List<String> tags = new ArrayList<>();
-            tags.add(photo.getTitle());
-            photo.setTags(tags);
+            try {
+                JSONArray objects =  (JSONArray)response.get("imageTags");
+
+                for(int j=0;j<objects.length();j++){
+                    if(objects.getJSONObject(j).getString("url").equalsIgnoreCase(photo.getUrl())){
+                        JSONArray arr = objects.getJSONObject(j).getJSONArray("tags");
+                        List<String> list = new ArrayList<>();
+                        for(int k = 0; k < arr.length(); k++){
+                            list.add(arr.getString(k));
+                        }
+                        photo.setTags(list);
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+//            tags.add(photo.getTitle());
+           // photo.setTags(tags);
         }
         updateStatusText();
         isWaitingForResponse = false;
@@ -340,15 +389,7 @@ public class SpaceGalleryActivity extends AppCompatActivity {
 
     private void onFailure() {
 
-        Log.d(TAG, "Tags set:");
-        SpacePhoto[] originalPhotos = SpacePhoto.getSpacePhotos();
-        for(int i=0; i<originalPhotos.length; i++) {
-            SpacePhoto photo = originalPhotos[i];
-            List<String> tags = new ArrayList<>();
-            tags.add(photo.getTitle());
-            photo.setTags(tags);
-        }
-        updateStatusText();
+        statusText.setText("Something Went Wrong, try again");
         isWaitingForResponse = false;
     }
 }
